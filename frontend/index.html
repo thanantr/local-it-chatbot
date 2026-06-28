@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT-NEXUS // Local IT Tutor & Learning Path</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- HighlightJS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/tokyo-night-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <!-- MarkedJS -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="logo-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+                <div class="brand-text">
+                    <h1>IT-NEXUS</h1>
+                    <span>IT TUTOR & LEARNING JOURNEY</span>
+                </div>
+            </div>
+
+            <!-- Connection Status Panel -->
+            <div class="status-panel">
+                <div class="status-indicator-group">
+                    <span class="status-dot disconnected" id="status-dot"></span>
+                    <span class="status-text" id="status-text">Checking Ollama...</span>
+                </div>
+                <button class="icon-btn btn-refresh" id="refresh-status-btn" title="Refresh Ollama Connection">
+                    <i class="fa-solid fa-rotate"></i>
+                </button>
+            </div>
+
+            <!-- Learning Progress Card -->
+            <div class="progress-card">
+                <div class="progress-info">
+                    <span>Overall IT Progress</span>
+                    <strong id="overall-percentage">0%</strong>
+                </div>
+                <div class="progress-bar-large">
+                    <div class="progress-fill-large" id="overall-progress-fill" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <!-- Learning Journey Modules (Accordion) -->
+            <div class="sidebar-section">
+                <h3><i class="fa-solid fa-map-signs"></i> Learning Roadmap</h3>
+                <div class="roadmap-accordion" id="roadmap-accordion">
+                    <!-- Dynamic Modules inserted here -->
+                </div>
+                <button class="btn btn-secondary btn-full btn-small" id="reset-progress-btn" style="margin-top: 10px;">
+                    <i class="fa-solid fa-arrow-rotate-left"></i> Reset Learning Progress
+                </button>
+            </div>
+
+            <!-- Document Upload Accordion -->
+            <div class="sidebar-section collapsible-section">
+                <div class="section-header" id="doc-section-toggle">
+                    <h3><i class="fa-solid fa-folder-open"></i> Upload Reference Docs</h3>
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="section-content" id="doc-section-content" style="display: none;">
+                    <div class="upload-zone" id="upload-zone">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <p>Drag & Drop PDFs, MD, or TXT</p>
+                        <span>or click to browse</span>
+                        <input type="file" id="file-input" accept=".txt,.md,.pdf" style="display: none;">
+                    </div>
+
+                    <div class="uploading-progress" id="upload-progress-container" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="upload-progress-fill"></div>
+                        </div>
+                        <span id="upload-progress-text">Uploading...</span>
+                    </div>
+
+                    <div class="doc-list-container">
+                        <ul class="doc-list" id="doc-list">
+                            <!-- Documents populated dynamically -->
+                        </ul>
+                    </div>
+
+                    <button class="btn btn-secondary btn-full btn-small" id="clear-docs-btn">
+                        <i class="fa-solid fa-trash-can"></i> Clear Uploads
+                    </button>
+                </div>
+            </div>
+
+            <!-- LLM Configurations -->
+            <div class="sidebar-section collapsible-section">
+                <div class="section-header" id="engine-section-toggle">
+                    <h3><i class="fa-solid fa-brain"></i> Engine Models</h3>
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="section-content" id="engine-section-content" style="display: none;">
+                    <div class="form-group-sidebar">
+                        <label for="llm-model-select">LLM Model</label>
+                        <div class="custom-select-wrapper">
+                            <select id="llm-model-select">
+                                <option value="">No models found</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group-sidebar" style="margin-top: 10px;">
+                        <label for="embedding-model-select">Embeddings (for Uploaded Docs)</label>
+                        <div class="custom-select-wrapper">
+                            <select id="embedding-model-select">
+                                <option value="">None (Keyword Fallback)</option>
+                                <option value="nomic-embed-text">nomic-embed-text</option>
+                                <option value="all-minilm">all-minilm</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Actions -->
+            <div class="sidebar-bottom">
+                <button class="btn btn-secondary btn-full" id="open-settings-btn">
+                    <i class="fa-solid fa-sliders"></i> Tutor Settings
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="chat-area">
+            <!-- Header -->
+            <header class="chat-header">
+                <div class="header-info">
+                    <span class="active-session-title" id="session-title">IT Classroom Console</span>
+                    <div class="active-indicators">
+                        <span class="indicator-tag" id="active-model-tag"><i class="fa-solid fa-microchip"></i> No Model</span>
+                        <span class="indicator-tag" id="rag-status-tag"><i class="fa-solid fa-circle-nodes"></i> RAG: Off</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" id="clear-chat-btn">
+                        <i class="fa-solid fa-broom"></i> Clear Console
+                    </button>
+                </div>
+            </header>
+
+            <!-- Chat Window -->
+            <div class="chat-messages-container" id="chat-messages-container">
+                <div class="welcome-screen" id="welcome-screen">
+                    <div class="welcome-header">
+                        <h2>Welcome to your IT Learning journey!</h2>
+                        <p>I am your IT Teacher. I'll explain complex technical topics in easy terms and test you with mini-quizzes as we go.</p>
+                    </div>
+                    
+                    <div class="prompt-grid">
+                        <div class="prompt-card" data-prompt="Teach me about Operating System basics and navigating the command line. Give a simple analogy of what a Terminal actually is.">
+                            <div class="card-icon" style="color: var(--color-cyan);"><i class="fa-solid fa-terminal"></i></div>
+                            <h4>Operating System & Terminal</h4>
+                            <p>What is a CLI and how do we use it to talk to computers?</p>
+                        </div>
+                        <div class="prompt-card" data-prompt="Teach me computer networking basics. Explain IP addresses and DNS using a simple real-world analogy.">
+                            <div class="card-icon" style="color: var(--color-blue);"><i class="fa-solid fa-network-wired"></i></div>
+                            <h4>IP Addresses & DNS</h4>
+                            <p>How does the Internet know where to send websites?</p>
+                        </div>
+                        <div class="prompt-card" data-prompt="Teach me Git version control. Explain repository, commit, and push using the analogy of a creative writing project.">
+                            <div class="card-icon" style="color: var(--color-purple);"><i class="fa-solid fa-code-commit"></i></div>
+                            <h4>Git & Version Control</h4>
+                            <p>How do teams edit code together without breaking everything?</p>
+                        </div>
+                        <div class="prompt-card" data-prompt="Teach me Docker containers. Explain the difference between virtual machines and containers using a shipping ports analogy.">
+                            <div class="card-icon" style="color: var(--color-green);"><i class="fa-solid fa-cubes"></i></div>
+                            <h4>Docker & Containers</h4>
+                            <p>What are containers and why do developers love them?</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Chat Bubbles dynamically inserted here -->
+            </div>
+
+            <!-- Chat Input Area -->
+            <footer class="chat-input-container">
+                <div class="input-toolbar">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="rag-toggle">
+                        <span class="slider"></span>
+                        <span class="toggle-label"><i class="fa-solid fa-bolt"></i> Enhance with Document Library (RAG)</span>
+                    </label>
+                </div>
+                <div class="input-box">
+                    <textarea id="chat-textarea" placeholder="Type a message, answer a quiz, or ask a question... (Press Enter to send)" rows="1"></textarea>
+                    <button id="send-btn" class="send-btn" disabled>
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+            </footer>
+        </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settings-modal" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-sliders"></i> Tutor Settings</h2>
+                <button class="close-btn" id="close-settings-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="settings-ollama-host">Ollama Server Host</label>
+                    <input type="text" id="settings-ollama-host" value="http://localhost:11434">
+                    <span class="help-text">Default: http://localhost:11434</span>
+                </div>
+                <div class="form-group">
+                    <label for="settings-system-prompt">Tutor System Prompt</label>
+                    <textarea id="settings-system-prompt" rows="6">You are a patient, encouraging, and highly skilled IT Teacher and Tutor. Your student is a non-IT beginner, so you must explain all technical concepts using simple everyday analogies. Do NOT use heavy IT jargon without explaining it in simple terms first. Keep your tone positive, encouraging, and friendly. Keep your explanations brief and step-by-step. At the end of every response explaining a concept, write a short, 1-question quiz (multiple choice or a simple open-ended question) to test the student's understanding. Ask them to type their answer. If they answer correctly in their next turn, congratulate them and tell them they can mark this topic as complete. If they answer incorrectly, guide them gently to the correct answer.</textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label for="settings-temperature">Explanation Creativity</label>
+                        <div class="range-container">
+                            <input type="range" id="settings-temperature" min="0" max="1" step="0.1" value="0.7">
+                            <span id="temp-val">0.7</span>
+                        </div>
+                    </div>
+                    <div class="form-group half">
+                        <label for="settings-max-tokens">Max Tokens</label>
+                        <input type="number" id="settings-max-tokens" value="2048" min="256" max="8192">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" id="save-settings-btn">Save Configurations</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-glow"></div>
+</body>
+</html>

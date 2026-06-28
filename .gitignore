@@ -1,0 +1,5 @@
+__pycache__/
+*.py[cod]
+vector_store.json
+progress.json
+documents/
