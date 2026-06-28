@@ -236,10 +236,36 @@ def get_models():
         r = requests.get(f"{OLLAMA_HOST}/api/tags", timeout=5)
         if r.status_code == 200:
             models = r.json().get("models", [])
-            return {"models": models}
-        return {"models": [], "error": f"Ollama returned status {r.status_code}"}
+            chat_models = []
+            embedding_models = []
+            
+            for m in models:
+                capabilities = m.get("capabilities", [])
+                name_lower = m["name"].lower()
+                
+                # 1. Determine if it is an embedding model
+                is_embedding = "embedding" in capabilities
+                if not is_embedding and any(w in name_lower for w in ["embed", "bge", "minilm"]):
+                    is_embedding = True
+                    
+                # 2. Determine if it is a chat/completion model
+                is_chat = "completion" in capabilities or "chat" in capabilities
+                # If capabilities not declared, default to chat if it's not clearly an embedding model
+                if not is_chat and not is_embedding:
+                    is_chat = True
+                    
+                if is_chat:
+                    chat_models.append(m)
+                if is_embedding:
+                    embedding_models.append(m)
+                    
+            return {
+                "chat_models": chat_models,
+                "embedding_models": embedding_models
+            }
+        return {"chat_models": [], "embedding_models": [], "error": f"Ollama returned status {r.status_code}"}
     except Exception as e:
-        return {"models": [], "error": str(e)}
+        return {"chat_models": [], "embedding_models": [], "error": str(e)}
 
 # --- PROGRESS TRACKING API ---
 

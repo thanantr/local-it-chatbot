@@ -216,23 +216,42 @@ async function fetchModels() {
         const data = await response.json();
         
         elements.llmModelSelect.innerHTML = '';
+        elements.embeddingModelSelect.innerHTML = '<option value="">None (Keyword Fallback)</option>';
         
-        if (data.models && data.models.length > 0) {
-            data.models.forEach(model => {
+        // 1. Populate LLM chat models
+        if (data.chat_models && data.chat_models.length > 0) {
+            data.chat_models.forEach(model => {
                 const opt = document.createElement('option');
                 opt.value = model.name;
                 opt.innerText = model.name;
                 elements.llmModelSelect.appendChild(opt);
             });
-            state.activeModel = data.models[0].name;
+            // Try to find a recommended model (qwen or llama) to set as default, otherwise pick the first one
+            const defaultModel = data.chat_models.find(m => m.name.includes('qwen') || m.name.includes('llama')) || data.chat_models[0];
+            state.activeModel = defaultModel.name;
+            elements.llmModelSelect.value = state.activeModel;
             updateActiveModelTag();
         } else {
             const opt = document.createElement('option');
             opt.value = '';
-            opt.innerText = 'No models found (pull some)';
+            opt.innerText = 'No chat models found (pull some)';
             elements.llmModelSelect.appendChild(opt);
             state.activeModel = '';
             updateActiveModelTag();
+        }
+        
+        // 2. Populate Embedding models
+        if (data.embedding_models && data.embedding_models.length > 0) {
+            data.embedding_models.forEach(model => {
+                const opt = document.createElement('option');
+                opt.value = model.name;
+                opt.innerText = model.name;
+                elements.embeddingModelSelect.appendChild(opt);
+            });
+            // Automatically select bge or nomic model if present
+            const defaultEmbed = data.embedding_models.find(m => m.name.includes('bge') || m.name.includes('nomic')) || data.embedding_models[0];
+            state.embeddingModel = defaultEmbed.name;
+            elements.embeddingModelSelect.value = state.embeddingModel;
         }
     } catch (error) {
         console.error('Failed to fetch models:', error);
